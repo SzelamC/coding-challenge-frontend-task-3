@@ -16,7 +16,7 @@ export default function Home() {
     async (message: SiweMessage, signature: string) => {
       setLoading(false);
       // TODO: verify signature with message from backend
-      const valid = (await fetch("https://localhost:3000/api/valid-signature", {
+      const valid = (await fetch("http://localhost:3000/api/valid-signature", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
