@@ -76,6 +76,7 @@ const ConnectWalletButton = ({
 
   const cancel = () => {
     reset();
+    // INFO: Not sure why disconnect not change the state from the useAccount hook
     disconnect();
   };
 
