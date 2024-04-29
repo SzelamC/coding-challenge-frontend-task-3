@@ -1,8 +1,10 @@
 import { Button } from "@chakra-ui/react";
 import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit";
 import { ReactNode, useEffect, useState } from "react";
-import { SiweMessage } from "siwe";
+import { SiweMessage, generateNonce } from "siwe";
 import { useAccount, useDisconnect, useSignMessage } from "wagmi";
+import FollowActionDialog from "./FollowActionDialog";
+import { signingMessage } from "@/services/auth";
 
 const ConnectWalletButton = ({
   className: className = "",
@@ -33,28 +35,37 @@ const ConnectWalletButton = ({
     data: signature,
     isSuccess: isSigned,
     error: signError,
-    signMessage,
+    signMessageAsync,
   } = useSignMessage();
 
   useEffect(() => {
     disconnect();
   }, []);
 
-  const verifySignature = async (
-    message: SiweMessage,
-    signature: string,
-    nonce: string
-  ) => {
-    try {
-      await message.verify({
-        signature,
-        nonce,
-      });
-      return true;
-    } catch (error) {
-      return false;
+  useEffect(() => {
+    if (isConnecting) {
+      return;
     }
-  };
+    if (isConnected) {
+      setShowConfirmAddress(true);
+    }
+  }, [isConnected, isConnecting]);
+
+  // const verifySignature = async (
+  //   message: SiweMessage,
+  //   signature: string,
+  //   nonce: string,
+  // ) => {
+  //   try {
+  //     await message.verify({
+  //       signature,
+  //       nonce,
+  //     });
+  //     return true;
+  //   } catch (error) {
+  //     return false;
+  //   }
+  // };
 
   const reset = () => {
     setShowConfirmAddress(false);
@@ -69,15 +80,39 @@ const ConnectWalletButton = ({
   };
 
   const handleSignMessage = async (
-    address?: string
+    address?: `0x${string}`,
   ): Promise<SiweMessage | null> => {
-    return null;
+    if (!address) return null;
+    try {
+      const nonce = generateNonce();
+      const signableMessage = signingMessage(address, nonce);
+      const signature = await signMessageAsync({
+        account: address,
+        message: signableMessage.prepareMessage(),
+      });
+      setNonce(nonce);
+      setMessage(message);
+      onSuccess(signableMessage, signature);
+      return signableMessage;
+    } catch (err) {
+      onError();
+      return null;
+    }
   };
 
   const handleOpenConnectModal = (
     connected: boolean,
-    openConnectModal: () => void
-  ) => {};
+    openConnectModal: () => void,
+  ) => {
+    try {
+      setActive(true);
+      if (!connected) {
+        openConnectModal();
+      }
+    } catch (err) {
+      cancel();
+    }
+  };
 
   return (
     <>
@@ -93,7 +128,7 @@ const ConnectWalletButton = ({
                 onClick={() => {
                   handleOpenConnectModal(
                     connected || isConnected,
-                    openConnectModal
+                    openConnectModal,
                   );
                 }}
                 isDisabled={disabled}
@@ -106,6 +141,12 @@ const ConnectWalletButton = ({
           );
         }}
       </ConnectButton.Custom>
+      <FollowActionDialog
+        isOpen={showConfirmAddress}
+        setOpen={setShowConfirmAddress}
+        cancel={cancel}
+        handleSignMessage={handleSignMessage}
+      />
     </>
   );
 };

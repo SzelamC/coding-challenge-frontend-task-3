@@ -11,6 +11,8 @@ import type { AppProps } from "next/app";
 import { useMemo } from "react";
 import { WagmiProvider } from "wagmi";
 import { mainnet } from "wagmi/chains";
+import { ChakraProvider } from "@chakra-ui/react";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 export default function App({ Component, pageProps }: AppProps) {
   const queryClient = new QueryClient();
@@ -24,6 +26,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ReactQueryDevtools initialIsOpen={false} />
       <WagmiProvider config={wagmiConfig} reconnectOnMount={false}>
         <RainbowKitProvider
           appInfo={{
@@ -36,7 +39,9 @@ export default function App({ Component, pageProps }: AppProps) {
             darkMode: darkTheme(),
           }}
         >
-          <Component {...pageProps} />
+          <ChakraProvider>
+            <Component {...pageProps} />
+          </ChakraProvider>
         </RainbowKitProvider>
       </WagmiProvider>
     </QueryClientProvider>

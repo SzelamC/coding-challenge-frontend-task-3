@@ -12,11 +12,27 @@ export default function Home() {
     setLoading(true);
   }, []);
 
-  const onSuccess = useCallback((message: SiweMessage, signature: string) => {
-    setLoading(false);
-    // TODO verify signature with message from backend
-    setWallet(message.address);
-  }, []);
+  const onSuccess = useCallback(
+    async (message: SiweMessage, signature: string) => {
+      setLoading(false);
+      // TODO: verify signature with message from backend
+      const valid = (await fetch("http://localhost:3000/api/valid-signature", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message, signature }),
+        credentials: "include",
+      }).then((response) => response.json())) as boolean;
+      if (valid) {
+        setWallet(message.address);
+      } else {
+        throw new Error("Invalid signature");
+        // TODO: other error handling
+      }
+    },
+    [],
+  );
 
   const onError = useCallback(() => {
     setLoading(false);
@@ -42,23 +58,23 @@ export default function Home() {
           </Button>
         </ConnectWalletButton>
 
-        <ConnectWalletButton
-          onClick={onClick}
-          onSuccess={onSuccess}
-          onError={onError}
-        >
-          <Button variant="outline" as="div" isDisabled={loading}>
-            Custom Button UI
-          </Button>
-        </ConnectWalletButton>
-
-        <ConnectWalletButton
-          onClick={onClick}
-          onSuccess={onSuccess}
-          onError={onError}
-        >
-          <StarIcon color="green" />
-        </ConnectWalletButton>
+        {/* <ConnectWalletButton */}
+        {/*   onClick={onClick} */}
+        {/*   onSuccess={onSuccess} */}
+        {/*   onError={onError} */}
+        {/* > */}
+        {/*   <Button variant="outline" as="div" isDisabled={loading}> */}
+        {/*     Custom Button UI */}
+        {/*   </Button> */}
+        {/* </ConnectWalletButton> */}
+        {/**/}
+        {/* <ConnectWalletButton */}
+        {/*   onClick={onClick} */}
+        {/*   onSuccess={onSuccess} */}
+        {/*   onError={onError} */}
+        {/* > */}
+        {/*   <StarIcon color="green" /> */}
+        {/* </ConnectWalletButton> */}
       </div>
     </div>
   );
